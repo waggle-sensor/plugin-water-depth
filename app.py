@@ -19,11 +19,12 @@ def run(args):
         print(f"Loading Model at time: {timestamp}")
         with plugin.timeit("plugin.duration.loadmodel"):
             unet_main = Unet_Main()
-            match = {}
-            with open('mapping.txt', 'r') as f:
-                for line in f:
-                    a = line.strip().split(',')
-                    match[int(a[0])] = float(a[1])
+
+        match = {}
+        a = args.mapping.strip().split(' ')
+        for i in a:
+            b = i.split(',')
+            match[int(b[0])] = b[1]
 
         sampling_countdown = -1
         if args.sampling_interval >= 0:
@@ -35,10 +36,8 @@ def run(args):
                 sample = camera.snapshot()
                 image = sample.data
                 imagetimestamp = sample.timestamp
-                #image = cv2.imread('test_image.jpg')
-                #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                #imagetimestamp = time.time()
-                image = image[100:1060, 400:600]
+                y1, y2, x1, x2 = args.cropping.strip().split(' ')
+                image = image[int(y1):int(y2), int(x1):int(x2)]
             if args.debug:
                 s = time.time()
             with plugin.timeit("plugin.duration.inferencing"):
@@ -50,11 +49,11 @@ def run(args):
 
             if depth != None:
                 if depth not in match:
-                    plugin.publish(TOPIC_WATERDEPTH, 'out of range', timestamp=timestamp)
+                    plugin.publish(TOPIC_WATERDEPTH, 'out of range', timestamp=imagetimestamp)
                 else:
-                    plugin.publish(TOPIC_WATERDEPTH, match[depth], timestamp=timestamp)
+                    plugin.publish(TOPIC_WATERDEPTH, match[depth], timestamp=imagetimestamp)
             else:
-                plugin.publish(TOPIC_WATERDEPTH, 'no detection', timestamp=timestamp)
+                plugin.publish(TOPIC_WATERDEPTH, 'no detection', timestamp=imagetimestamp)
 
             if sampling_countdown > 0:
                 sampling_countdown -= 1
@@ -80,8 +79,8 @@ if __name__ == '__main__':
         help='Debug flag')
     parser.add_argument(
         '-threshold', dest='threshold',
-        action='store', default=0.9, type=float,
-        help='Cloud pixel determination threshold')
+        action='store', default=175, type=int,
+        help='Measuring sick segmentation threshold')
 
     parser.add_argument(
         '-continuous', dest='continuous',
@@ -99,5 +98,14 @@ if __name__ == '__main__':
         '-sampling-interval', dest='sampling_interval',
         action='store', default=-1, type=int,
         help='Sampling interval between inferencing')
+
+    parser.add_argument(
+        '-cropping', dest='cropping',
+        action='store', default="200 700 600 800", type=str,
+        help='Points for cropping as string, put the order of "y1 y2 x1 x2"')
+    parser.add_argument(
+        '-mapping', dest='mapping',
+        action='store', default="469,6 467,7 465,8 463,9 461,10 459,11 457,12 455,13 453,14 450,15 448,16 446,17 444,18 442,19 440,20",
+        type=str, help='Points for mapping result to water depth as string, put the order of "pixel_height,depth_in_cm pixel_height,depth_in_cm ..."')
 
     run(parser.parse_args())
