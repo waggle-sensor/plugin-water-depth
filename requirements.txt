@@ -1,2 +1,1 @@
-git+https://github.com/sagecontinuum/sage-cli.git
-pywaggle[vision] @ https://github.com/waggle-sensor/pywaggle/releases/download/0.52.7/pywaggle-0.52.7-py3-none-any.whl
+pywaggle[all]==0.55.*
