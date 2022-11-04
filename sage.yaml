@@ -32,4 +32,4 @@ inputs:
 - id: "mapping"
   type: "string"
 metadata:
-  ontology: env.counter.*
+  ontology: env.water.depth
