@@ -12,6 +12,26 @@ from waggle.data.vision import Camera
 
 TOPIC_WATERDEPTH = "env.water.depth"
 
+
+def parse_mapping_table(lines):
+    xp = []
+    fp = []
+    for line in lines.split(" "):
+        pixel_height, centimeter = line.split(",")
+        xp.append(float(pixel_height))
+        fp.append(float(centimeter))
+    return np.array(xp), np.array(fp)
+
+
+def get_water_depth_to_cm(pixel_height, xp, fp):
+    unknown_height = -999
+    # check if xp is increasing. np.interp works only with increasing xp
+    if np.all(np.diff(xp) > 0):
+        return np.interp(pixel_height, xp, fp, left=unknown_height, right=unknown_height)
+    else:
+        return np.interp(pixel_height, xp[::-1], fp[::-1], left=unknown_height, right=unknown_height)
+
+
 def run(args):
     print("Water depth estimation starts...")
     with Plugin() as plugin, Camera(args.stream) as camera:
@@ -20,12 +40,7 @@ def run(args):
         with plugin.timeit("plugin.duration.loadmodel"):
             unet_main = Unet_Main()
 
-        match = {}
-        a = args.mapping.strip().split(' ')
-        for i in a:
-            b = i.split(',')
-            match[int(b[0])] = b[1]
-
+        xp, fp = parse_mapping_table(args.mapping.strip())
         sampling_countdown = -1
         if args.sampling_interval >= 0:
             print(f"Sampling enabled -- occurs every {args.sampling_interval}th inferencing")
@@ -46,12 +61,12 @@ def run(args):
                 e = time.time()
                 print(f'Time elapsed for inferencing: {e-s} seconds')
 
-
             if depth != None:
-                if depth not in match:
+                depth_in_cm = get_water_depth_to_cm(depth, xp, fp)
+                if depth_in_cm < 0:
                     plugin.publish(TOPIC_WATERDEPTH, 'out of range', timestamp=imagetimestamp)
                 else:
-                    plugin.publish(TOPIC_WATERDEPTH, match[depth], timestamp=imagetimestamp)
+                    plugin.publish(TOPIC_WATERDEPTH, depth_in_cm, timestamp=imagetimestamp)
             else:
                 plugin.publish(TOPIC_WATERDEPTH, 'no detection', timestamp=imagetimestamp)
 
