@@ -1,6 +1,6 @@
 name: "water-depth-estimator"
 namespace: "waggle"
-version: "0.0.1"
+version: "0.0.2"
 description: "Water Depth Estimator"
 authors: "Seongha Park <seongha.park@anl.gov>"
 collaborators: "Waggle Team <https://wa8.gl>"
