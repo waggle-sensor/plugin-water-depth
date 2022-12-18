@@ -10,7 +10,8 @@ from unet_module import Unet_Main
 from waggle.plugin import Plugin
 from waggle.data.vision import Camera
 
-TOPIC_WATERDEPTH = "env.water.depth"
+TOPIC_WATERDEPTH = "env.depth.water"
+TOPIC_WATERDEPTHLOG = "log.depth.water"
 
 
 def parse_mapping_table(lines):
@@ -64,11 +65,11 @@ def run(args):
             if depth != None:
                 depth_in_cm = get_water_depth_to_cm(depth, xp, fp)
                 if depth_in_cm < 0:
-                    plugin.publish(TOPIC_WATERDEPTH, 'out of range', timestamp=imagetimestamp)
+                    plugin.publish(TOPIC_WATERDEPTHLOG, 'out of range', timestamp=imagetimestamp)
                 else:
                     plugin.publish(TOPIC_WATERDEPTH, depth_in_cm, timestamp=imagetimestamp)
             else:
-                plugin.publish(TOPIC_WATERDEPTH, 'no detection', timestamp=imagetimestamp)
+                plugin.publish(TOPIC_WATERDEPTHLOG, 'no detection', timestamp=imagetimestamp)
 
             if sampling_countdown > 0:
                 sampling_countdown -= 1
