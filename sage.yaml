@@ -1,6 +1,6 @@
 name: "water-depth-estimator"
 namespace: "waggle"
-version: "0.0.2"
+version: "0.0.3"
 description: "Water Depth Estimator"
 authors: "Seongha Park <seongha.park@anl.gov>"
 collaborators: "Waggle Team <https://wa8.gl>"
@@ -32,4 +32,8 @@ inputs:
 - id: "mapping"
   type: "string"
 metadata:
-  ontology: env.water.depth
+  ontology:
+  - name: env.depth.water
+    type: float
+  - name: log.depth.water
+    type: string
